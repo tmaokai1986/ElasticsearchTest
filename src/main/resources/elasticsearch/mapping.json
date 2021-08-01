@@ -1,0 +1,94 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1
+  },
+  "mappings": {
+    "properties": {
+      "orderId": {
+        "type": "text"
+      },
+      "createTime": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss||epoch_millis"
+      },
+      "payTime": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss||epoch_millis"
+      },
+      "customerId": {
+        "type": "keyword"
+      },
+      "customerName": {
+        "type": "keyword"
+      },
+      "orderType": {
+        "type": "keyword"
+      },
+      "sourceType": {
+        "type": "keyword"
+      },
+      "status": {
+        "type": "keyword"
+      },
+      "contractId": {
+        "type": "keyword"
+      },
+      "salesManId": {
+        "type": "keyword"
+      },
+      "lastUpdateTime": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss||epoch_millis"
+      },
+      "orderLineItems": {
+        "type": "nested",
+        "properties": {
+          "orderLineItemId": {
+            "type": "keyword"
+          },
+          "dataCenterId": {
+            "type": "keyword"
+          },
+          "dataCenterName": {
+            "type": "keyword"
+          },
+          "productId": {
+            "type": "keyword"
+          },
+          "productName": {
+            "type": "object",
+            "properties": {
+              "zhCN": {
+                "type": "text"
+              },
+              "enUS": {
+                "type": "text"
+              },
+              "localLang": {
+                "type": "text"
+              }
+            }
+          },
+          "cloudTypeCode": {
+            "type": "keyword"
+          },
+          "cloudTypeName": {
+            "type": "object",
+            "properties": {
+              "zhCN": {
+                "type": "text"
+              },
+              "enUS": {
+                "type": "text"
+              },
+              "localLang": {
+                "type": "text"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
