@@ -4,6 +4,9 @@ import com.sun.xml.internal.ws.api.policy.SourceModel;
 import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.RestClients;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
@@ -14,17 +17,27 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilde
 import org.springframework.data.elasticsearch.core.query.Query;
 import xyz.lockon.entry.OrderItem;
 
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Optional;
+
 public class QueryMain {
 
-    public static void main(String[] args) {
+    private static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    public static void main(String[] args) throws ParseException, IOException {
         ClientConfiguration clientConfiguration = ClientConfiguration.builder().connectedTo("127.0.0.1:9200").build();
-        ElasticsearchRestTemplate restTemplate =
-            new ElasticsearchRestTemplate(RestClients.create(clientConfiguration).rest());
-        IndexCoordinates indexCoordinates = IndexCoordinates.of("order");
+        RestClients.ElasticsearchRestClient restClient = RestClients.create(clientConfiguration);
+        ElasticsearchRestTemplate restTemplate = new ElasticsearchRestTemplate(restClient.rest());
+        IndexCoordinates indexCoordinates = IndexCoordinates.of("order-2");
         SearchHits<OrderItem> resultList =
             restTemplate.search(buildQuery("dcef4edd1cd3"), OrderItem.class, indexCoordinates);
-        long count = restTemplate.count(buildQuery("dcef4edd1cd3"), OrderItem.class, indexCoordinates);
+        long count = restTemplate.count(buildTimeQuery(simpleDateFormat.parse("2022-01-01 00:00:00"), null),
+            OrderItem.class, indexCoordinates);
         System.out.println(String.format("data count %d", count));
+        restClient.close();
     }
 
     public static Query buildQuery(String name) {
@@ -33,6 +46,22 @@ public class QueryMain {
         queryBuilder.must(QueryBuilders.nestedQuery("orderLineItems",
             QueryBuilders.matchQuery("orderLineItems.cloudTypeName.zhCN", name), ScoreMode.None));
         nativeSearchQueryBuilder.withFilter(queryBuilder);
+        return nativeSearchQueryBuilder.build();
+    }
+
+    public static Query buildTimeQuery(Date startTime, Date endTime) {
+        NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+        RangeQueryBuilder rangeQueryBuilder = QueryBuilders.rangeQuery("createTime");
+        Optional.ofNullable(startTime).ifPresent(t -> {
+            rangeQueryBuilder.from(startTime.getTime());
+        });
+        Optional.ofNullable(endTime).ifPresent(t -> {
+            rangeQueryBuilder.to(endTime.getTime());
+        });
+        queryBuilder.must(rangeQueryBuilder);
+        nativeSearchQueryBuilder.withFilter(queryBuilder);
+        nativeSearchQueryBuilder.withSort(new FieldSortBuilder("createTime").order(SortOrder.DESC));
         return nativeSearchQueryBuilder.build();
     }
 }

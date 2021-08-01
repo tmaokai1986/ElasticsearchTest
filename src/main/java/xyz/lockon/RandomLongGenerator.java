@@ -14,6 +14,6 @@ public class RandomLongGenerator {
     }
 
     public long nextNumber() {
-        return startNumer + random.nextLong() % (endNumber - startNumer);
+        return startNumer + Math.abs(random.nextLong()) % (endNumber - startNumer);
     }
 }

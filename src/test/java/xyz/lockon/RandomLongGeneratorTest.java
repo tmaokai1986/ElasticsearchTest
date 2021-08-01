@@ -10,7 +10,9 @@ public class RandomLongGeneratorTest {
         RandomLongGenerator randomLongGenerator = new RandomLongGenerator(100L, 1000L);
         for (int i = 0; i < 10000; i++) {
             long num = randomLongGenerator.nextNumber();
-            Assert.assertTrue(num >= 100 && num <= 1000);
+            if (num < 100 || num > 1000) {
+                Assert.assertTrue("Num =" + num, false);
+            }
         }
         randomLongGenerator = new RandomLongGenerator(100000000L, 1000000000L);
         for (int i = 0; i < 10000; i++) {
