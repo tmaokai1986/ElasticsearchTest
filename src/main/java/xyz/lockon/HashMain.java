@@ -1,18 +1,27 @@
 package xyz.lockon;
 
+import org.elasticsearch.cluster.metadata.IndexMetadata;
+import org.elasticsearch.cluster.routing.Murmur3HashFunction;
+
 public class HashMain {
     public static void main(String[] args) {
-        System.out.println(DJB_HASH("0") % 5);
-        System.out.println(DJB_HASH("1") % 5);
-        System.out.println(DJB_HASH("2") % 5);
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 100; j++) {
+                int hashId = calculateScaledShardId(String.valueOf(j), 0);
+                if (hashId == i) {
+                    System.out.println(String.format("%s, %s", hashId, j));
+                    break;
+                }
+            }
+        }
 
     }
 
-    public static int DJB_HASH(String value) {
-        long hash = 5381;
-        for (int i = 0; i < value.length(); i++) {
-            hash = ((hash << 5) + hash) + value.charAt(i);
-        }
-        return (int)hash;
+    private static int calculateScaledShardId(String effectiveRouting, int partitionOffset) {
+        final int hash = Murmur3HashFunction.hash(effectiveRouting) + partitionOffset;
+
+        // we don't use IMD#getNumberOfShards since the index might have been shrunk such that we need to use the size
+        // of original index to hash documents
+        return Math.floorMod(hash, 640) / 128;
     }
 }

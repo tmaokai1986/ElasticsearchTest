@@ -26,13 +26,13 @@ public class CreateTimeRoutingPolicy implements RoutingPolicy {
 
     CreateTimeRoutingPolicy() {
         try {
-            policyList.add(Policy.builder().routing("0")
+            policyList.add(Policy.builder().routing("3")
                 .endTime(simpleDateFormat.parse("2019-12-31 23:59:59").getTime() / 1000).build());
             policyList.add(
-                Policy.builder().routing("1").startTime(simpleDateFormat.parse("2020-01-01 00:00:00").getTime() / 1000)
+                Policy.builder().routing("4").startTime(simpleDateFormat.parse("2020-01-01 00:00:00").getTime() / 1000)
                     .endTime(simpleDateFormat.parse("2021-12-31 23:59:59").getTime() / 1000).build());
             policyList.add(
-                    Policy.builder().routing("2").startTime(simpleDateFormat.parse("2022-01-01 00:00:00").getTime() / 1000)
+                    Policy.builder().routing("7").startTime(simpleDateFormat.parse("2022-01-01 00:00:00").getTime() / 1000)
                             .endTime(simpleDateFormat.parse("2023-12-31 23:59:59").getTime() / 1000).build());
         } catch (ParseException e) {
             throw new IllegalStateException(e);
