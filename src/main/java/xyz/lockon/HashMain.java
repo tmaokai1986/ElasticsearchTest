@@ -5,7 +5,7 @@ import org.elasticsearch.cluster.routing.Murmur3HashFunction;
 
 public class HashMain {
     public static void main(String[] args) {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 100; j++) {
                 int hashId = calculateScaledShardId(String.valueOf(j), 0);
                 if (hashId == i) {
@@ -22,6 +22,6 @@ public class HashMain {
 
         // we don't use IMD#getNumberOfShards since the index might have been shrunk such that we need to use the size
         // of original index to hash documents
-        return Math.floorMod(hash, 640) / 128;
+        return Math.floorMod(hash, 1024) / 128;
     }
 }

@@ -16,10 +16,12 @@ public class CreateTimeRoutingPolicyTest {
         CreateTimeRoutingPolicy routingPolicy = new CreateTimeRoutingPolicy();
         Calendar calendar = Calendar.getInstance();
         calendar.set(2022,2,2);
-        Assert.assertEquals(routingPolicy.getRouting(OrderItem.builder().createTime(calendar.getTime()).build()), "2");
+        Assert.assertEquals(routingPolicy.getRouting(OrderItem.builder().createTime(calendar.getTime()).build()), "5");
+        calendar.set(2021,2,2);
+        Assert.assertEquals(routingPolicy.getRouting(OrderItem.builder().createTime(calendar.getTime()).build()), "7");
         calendar.set(2020,2,2);
-        Assert.assertEquals(routingPolicy.getRouting(OrderItem.builder().createTime(calendar.getTime()).build()), "1");
+        Assert.assertEquals(routingPolicy.getRouting(OrderItem.builder().createTime(calendar.getTime()).build()), "3");
         calendar.set(2019,2,2);
-        Assert.assertEquals(routingPolicy.getRouting(OrderItem.builder().createTime(calendar.getTime()).build()), "0");
+        Assert.assertEquals(routingPolicy.getRouting(OrderItem.builder().createTime(calendar.getTime()).build()), "1");
     }
 }

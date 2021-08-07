@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 public class CreateTimeRoutingPolicy implements RoutingPolicy {
     @Data
@@ -26,24 +27,44 @@ public class CreateTimeRoutingPolicy implements RoutingPolicy {
 
     CreateTimeRoutingPolicy() {
         try {
-            policyList.add(Policy.builder().routing("3")
-                .endTime(simpleDateFormat.parse("2019-12-31 23:59:59").getTime() / 1000).build());
+            policyList.add(Policy.builder().routing("1")
+                .endTime(getTime("2020-01-01 00:00:00")).build());
             policyList.add(
-                Policy.builder().routing("4").startTime(simpleDateFormat.parse("2020-01-01 00:00:00").getTime() / 1000)
-                    .endTime(simpleDateFormat.parse("2021-12-31 23:59:59").getTime() / 1000).build());
+                Policy.builder().routing("3").startTime(getTime("2020-01-01 00:00:00"))
+                    .endTime(getTime("2021-01-01 00:00:00")).build());
             policyList.add(
-                    Policy.builder().routing("7").startTime(simpleDateFormat.parse("2022-01-01 00:00:00").getTime() / 1000)
-                            .endTime(simpleDateFormat.parse("2023-12-31 23:59:59").getTime() / 1000).build());
+                    Policy.builder().routing("7").startTime(getTime("2021-01-01 00:00:00"))
+                            .endTime(getTime("2022-01-01 00:00:00")).build());
+            policyList.add(
+                    Policy.builder().routing("5").startTime(getTime("2022-01-01 00:00:00"))
+                            .endTime(getTime("2023-01-01 00:00:00")).build());
+            policyList.add(
+                    Policy.builder().routing("8").startTime(getTime("2023-01-01 00:00:00"))
+                            .endTime(getTime("2024-01-01 00:00:00")).build());
+            policyList.add(
+                    Policy.builder().routing("0").startTime(getTime("2024-01-01 00:00:00"))
+                            .endTime(getTime("2025-01-01 00:00:00")).build());
+            policyList.add(
+                    Policy.builder().routing("14").startTime(getTime("2025-01-01 00:00:00"))
+                            .endTime(getTime("2026-01-01 00:00:00")).build());
+            policyList.add(
+                    Policy.builder().routing("4").startTime(getTime("2026-01-01 00:00:00"))
+                            .endTime(Long.MAX_VALUE - 1).build());
         } catch (ParseException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private long getTime(String timeStr) throws ParseException {
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return simpleDateFormat.parse(timeStr).getTime() / 1000;
     }
 
     @Override
     public String getRouting(OrderItem orderItem) {
         long time = orderItem.getCreateTime().getTime() / 1000;
         for (Policy policy : policyList) {
-            if (time >= policy.startTime && time <= policy.endTime) {
+            if (time >= policy.startTime && time < policy.endTime) {
                 return policy.getRouting();
             }
         }
