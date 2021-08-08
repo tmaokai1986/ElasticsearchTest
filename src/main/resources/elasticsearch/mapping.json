@@ -11,11 +11,11 @@
       },
       "createTime": {
         "type": "date",
-        "format": "yyyy-MM-dd HH:mm:ss||epoch_millis"
+        "format": "yyyy-MM-dd HH:mm:ss.SSS||epoch_millis"
       },
       "payTime": {
         "type": "date",
-        "format": "yyyy-MM-dd HH:mm:ss||epoch_millis"
+        "format": "yyyy-MM-dd HH:mm:ss.SSS||epoch_millis"
       },
       "customerId": {
         "type": "keyword"
@@ -40,7 +40,7 @@
       },
       "lastUpdateTime": {
         "type": "date",
-        "format": "yyyy-MM-dd HH:mm:ss||epoch_millis"
+        "format": "yyyy-MM-dd HH:mm:ss.SSS||epoch_millis"
       },
       "orderLineItems": {
         "type": "nested",

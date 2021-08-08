@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,8 +48,10 @@ public class CreateMain {
         ElasticsearchRestTemplate restTemplate = new ElasticsearchRestTemplate(restClient.rest());
         IndexCoordinates indexCoordinates = IndexCoordinates.of(indexName);
         Calendar startCalendar = Calendar.getInstance();
+        startCalendar.setTimeZone(TimeZone.getTimeZone("UTC"));
         startCalendar.set(2012, 1, 1);
         Calendar endCalendar = Calendar.getInstance();
+        endCalendar.setTimeZone(TimeZone.getTimeZone("UTC"));
         endCalendar.set(2021, 12, 31);
         int orderNumPerCustomer = 10000;
         int customerNum = 1000;
