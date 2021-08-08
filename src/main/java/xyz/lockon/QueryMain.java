@@ -7,6 +7,9 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.RestClients;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
@@ -28,15 +31,17 @@ public class QueryMain {
     private static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public static void main(String[] args) throws ParseException, IOException {
-        ClientConfiguration clientConfiguration = ClientConfiguration.builder().connectedTo("127.0.0.1:9200").build();
+        ClientConfiguration clientConfiguration =
+            ClientConfiguration.builder().connectedTo("192.168.3.101:9200").build();
         RestClients.ElasticsearchRestClient restClient = RestClients.create(clientConfiguration);
         ElasticsearchRestTemplate restTemplate = new ElasticsearchRestTemplate(restClient.rest());
         IndexCoordinates indexCoordinates = IndexCoordinates.of("order-2");
         SearchHits<OrderItem> resultList =
-            restTemplate.search(buildQuery("dcef4edd1cd3"), OrderItem.class, indexCoordinates);
-        long count = restTemplate.count(buildTimeQuery(simpleDateFormat.parse("2022-01-01 00:00:00"), null),
-            OrderItem.class, indexCoordinates);
-        System.out.println(String.format("data count %d", count));
+            restTemplate.search(buildTimeQuery(simpleDateFormat.parse("2012-01-01 00:00:00"), null, 10000, 100),
+                OrderItem.class, indexCoordinates);
+        // long count = restTemplate.count(buildTimeQuery(simpleDateFormat.parse("2012-01-01 00:00:00"), null),
+        // OrderItem.class, indexCoordinates);
+        // System.out.println(String.format("data count %d", count));
         restClient.close();
     }
 
@@ -49,7 +54,7 @@ public class QueryMain {
         return nativeSearchQueryBuilder.build();
     }
 
-    public static Query buildTimeQuery(Date startTime, Date endTime) {
+    public static Query buildTimeQuery(Date startTime, Date endTime, int page, int size) {
         NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         RangeQueryBuilder rangeQueryBuilder = QueryBuilders.rangeQuery("createTime");
@@ -62,6 +67,9 @@ public class QueryMain {
         queryBuilder.must(rangeQueryBuilder);
         nativeSearchQueryBuilder.withFilter(queryBuilder);
         nativeSearchQueryBuilder.withSort(new FieldSortBuilder("createTime").order(SortOrder.DESC));
+        nativeSearchQueryBuilder.withRoute("0,1,2");
+        Pageable pageable = PageRequest.of(page, size);
+        nativeSearchQueryBuilder.withPageable(pageable);
         return nativeSearchQueryBuilder.build();
     }
 }

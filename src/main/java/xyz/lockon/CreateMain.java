@@ -1,17 +1,6 @@
 package xyz.lockon;
 
-import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.data.elasticsearch.client.ClientConfiguration;
-import org.springframework.data.elasticsearch.client.RestClients;
-import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
-import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
-import org.springframework.data.elasticsearch.core.query.IndexQuery;
-import xyz.lockon.entry.OrderItem;
-import xyz.lockon.routing.RoutingPolicy;
-import xyz.lockon.routing.RoutingPolicyFactory;
-
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -19,14 +8,24 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Condition;
+
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.data.elasticsearch.client.ClientConfiguration;
+import org.springframework.data.elasticsearch.client.RestClients;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.elasticsearch.core.query.IndexQuery;
+
+import xyz.lockon.entry.OrderItem;
+import xyz.lockon.routing.RoutingPolicy;
+import xyz.lockon.routing.RoutingPolicyFactory;
 
 public class CreateMain {
     private static AtomicLong totalTimecost = new AtomicLong(0);
     private static AtomicLong totalRecordCount = new AtomicLong(0);
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        int threadNum = 1;
+        int threadNum = 3;
         final CountDownLatch countDownLatch = new CountDownLatch(threadNum);
         ExecutorService executorService = Executors.newFixedThreadPool(threadNum);
         for (int i = 0; i < threadNum; i++) {
@@ -43,16 +42,16 @@ public class CreateMain {
 
     public static void doTest() {
         String indexName = "order-2";
-        ClientConfiguration clientConfiguration = ClientConfiguration.builder().connectedTo("127.0.0.1:9200").build();
+        ClientConfiguration clientConfiguration = ClientConfiguration.builder().connectedTo("192.168.3.101:9200").build();
         RestClients.ElasticsearchRestClient restClient = RestClients.create(clientConfiguration);
         ElasticsearchRestTemplate restTemplate = new ElasticsearchRestTemplate(restClient.rest());
         IndexCoordinates indexCoordinates = IndexCoordinates.of(indexName);
         Calendar startCalendar = Calendar.getInstance();
         startCalendar.set(2012, 1, 1);
         Calendar endCalendar = Calendar.getInstance();
-        endCalendar.set(2022, 12, 31);
-        int orderNumPerCustomer = 1000;
-        int customerNum = 100;
+        endCalendar.set(2021, 12, 31);
+        int orderNumPerCustomer = 10000;
+        int customerNum = 1000;
         int customerIdStartNum = 1000;
         OrderCreater orderCreater = OrderCreater.builder().orderNumPerCustomer(orderNumPerCustomer)
                 .customerIdGenerator(new CustomerIdGenerator(customerIdStartNum, customerNum)).createTimeGenerator(
@@ -90,7 +89,7 @@ public class CreateMain {
             IndexQuery indexQuery = new IndexQuery();
             indexQuery.setId(orderItem.getOrderId());
             indexQuery.setObject(orderItem);
-            indexQuery.setRouting(routingPolicy.getRouting(orderItem));
+            indexQuery.setRouting(routingPolicy.getRouting(orderItem).getRouting());
             indexQueryList.add(indexQuery);
         }
         while (true) {
