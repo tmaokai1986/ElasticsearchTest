@@ -8,8 +8,11 @@ import lombok.Data;
 @Data
 @Builder
 public class QueryCondition {
-    private int pageIndex;
-    private int pageSize;
+    private long offset;
+
+    private int limit;
+
     private Date startCreateTime;
+
     private Date endCreateTime;
 }

@@ -23,9 +23,11 @@ public class QueryActionImplTest {
         RestClients.ElasticsearchRestClient restClient = RestClients.create(clientConfiguration);
         QueryActionImpl queryAction = new QueryActionImpl(restClient);
         QueryCondition condition =
-            QueryCondition.builder().startCreateTime(simpleDateFormat.parse("2019-01-01 00:00:00"))
-                .endCreateTime(simpleDateFormat.parse("2019-12-31 23:59:59")).pageIndex(1).pageSize(100).build();
+            QueryCondition.builder().startCreateTime(simpleDateFormat.parse("2012-01-01 00:00:00"))
+                .endCreateTime(simpleDateFormat.parse("2021-12-31 23:59:59")).offset(10000888).limit(100).build();
+        long start = System.currentTimeMillis();
         Assert.assertEquals(queryAction.query(condition).getDataList().size(), 100);
+        System.out.println(String.format("time cost %d", (System.currentTimeMillis() - start)));
         restClient.close();
     }
 }

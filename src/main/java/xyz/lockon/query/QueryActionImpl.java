@@ -12,7 +12,6 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.client.RestClients;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.SearchHit;
@@ -32,6 +31,8 @@ import xyz.lockon.routing.RoutingPolicyFactory;
 public class QueryActionImpl implements QueryAction<OrderItem> {
     private static final Logger logger = LoggerFactory.getLogger(QueryActionImpl.class);
 
+    private static final long MAX_RESULT_WINDOW = 100000;
+
     private RoutingPolicy routingPolicy = RoutingPolicyFactory.createRoutingPolicy();
 
     private RestClients.ElasticsearchRestClient restClient;
@@ -42,28 +43,43 @@ public class QueryActionImpl implements QueryAction<OrderItem> {
 
     @Override
     public PageResultList<OrderItem> query(QueryCondition condition) {
+        return doQuery(condition);
+    }
+
+    private PageResultList<OrderItem> doQuery(QueryCondition condition) {
         List<Policy> policyList = routingPolicy.getRouting(condition);
         List<Query> queryList = buildQuery(condition, policyList);
         List<Long> countList = count(queryList);
-        List<OrderItem> resultData = new ArrayList<>(condition.getPageSize());
+        List<OrderItem> resultData = new ArrayList<>(condition.getLimit());
         long totalRecord = countList.stream().mapToLong(Long::longValue).sum();
-        long startPos = (condition.getPageIndex() - 1) * condition.getPageSize();
-        long total = 0;
+        long startPos = condition.getOffset();
         for (int i = 0; i < countList.size(); i++) {
-            total += countList.get(i).longValue();
-            if (total > startPos) {
-                Query query = queryList.get(i);
-                query.setPageable(PageRequest.of(Math.toIntExact((startPos - total + countList.get(i).longValue())),
-                    Math.toIntExact(Math.min(condition.getPageSize(), total - startPos - resultData.size()))));
-                resultData.addAll(search(query));
+            if (startPos > countList.get(i)) {
+                startPos -= countList.get(i);
+                continue;
             }
-            if (resultData.size() == condition.getPageSize()) {
+            QueryCondition tmpCon = QueryCondition.builder().startCreateTime(condition.getStartCreateTime())
+                .endCreateTime(condition.getEndCreateTime()).offset(condition.getOffset()).limit(condition.getLimit())
+                .build();
+            while (startPos + condition.getLimit() > MAX_RESULT_WINDOW) {
+                long offset = Math.min(MAX_RESULT_WINDOW - 1, startPos);
+                tmpCon.setOffset(offset);
+                tmpCon.setLimit(1);
+                Query query = buildQuery(tmpCon, policyList.get(i));
+                query.setPageable(new OffsetPageable(offset, tmpCon.getLimit()));
+                startPos -= offset;
+                List<OrderItem> tmpRlt = search(query);
+                tmpCon.setOffset(startPos);
+                tmpCon.setEndCreateTime(tmpRlt.get(0).getCreateTime());
+            }
+            Query query = buildQuery(tmpCon, policyList.get(i));
+            query.setPageable(new OffsetPageable(startPos, Math.toIntExact(condition.getLimit() - resultData.size())));
+            resultData.addAll(search(query));
+            if (resultData.size() == condition.getLimit()) {
                 break;
             }
         }
-
-        return PageResultList.<OrderItem>builder().totalRecordNum(totalRecord).currentPage(condition.getPageIndex())
-            .dataList(resultData).build();
+        return PageResultList.<OrderItem>builder().totalRecordNum(totalRecord).dataList(resultData).build();
     }
 
     private List<OrderItem> search(Query query) {
